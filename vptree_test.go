@@ -79,7 +79,8 @@ func TestEmpty(t *testing.T) {
 	vp := New(CoordinateMetric, nil)
 	qp := Coordinate{0, 0}
 
-	coords, distances := vp.Search(qp, 3)
+	searchParameters := SearchParametersNumResults(3)
+	coords, distances := vp.Search(qp, searchParameters)
 
 	if len(coords) != 0 {
 		t.Error("coords should have been of length 0")
@@ -108,7 +109,8 @@ func TestSmall(t *testing.T) {
 	}
 
 	vp := New(CoordinateMetric, vpitems)
-	coords1, distances1 := vp.Search(target, 3)
+	searchParameters := SearchParametersNumResults(3)
+	coords1, distances1 := vp.Search(target, searchParameters)
 	coords2, distances2 := nearestNeighbours(target, items, 3)
 
 	compareCoordDistSets(t, coords1, coords2, distances1, distances2)
@@ -138,7 +140,8 @@ func TestRandom(t *testing.T) {
 	k := rand.Intn(100) + 1
 
 	// Get the k nearest neighbours and their distances
-	coords1, distances1 := vp.Search(q, k)
+	searchParameters := SearchParametersNumResults(k)
+	coords1, distances1 := vp.Search(q, searchParameters)
 	coords2, distances2 := nearestNeighbours(q, items, k)
 
 	compareCoordDistSets(t, coords1, coords2, distances1, distances2)
@@ -172,7 +175,8 @@ func TestConcurrent(t *testing.T) {
 				q := Coordinate{X: rand.Float64(), Y: rand.Float64()}
 
 				// Get the k nearest neighbours and their distances
-				coords1, distances1 := vp.Search(q, 10)
+				searchParameters := SearchParametersNumResults(10)
+				coords1, distances1 := vp.Search(q, searchParameters)
 				coords2, distances2 := nearestNeighbours(q, items, 10)
 
 				compareCoordDistSets(t, coords1, coords2, distances1, distances2)

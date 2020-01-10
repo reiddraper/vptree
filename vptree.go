@@ -35,6 +35,11 @@ type VPTree struct {
 	distanceMetric Metric
 }
 
+type SearchParameters struct {
+	NumResults  int
+	MaxDistance float64
+}
+
 // New creates a new VP-tree using the metric and items provided. The metric
 // measures the distance between two items, so that the VP-tree can find the
 // nearest neighbour(s) of a target item.
@@ -46,17 +51,26 @@ func New(metric Metric, items []interface{}) (t *VPTree) {
 	return
 }
 
+func DefaultSearchParameters() SearchParameters {
+	return SearchParameters{1, math.MaxFloat64}
+}
+
+func SearchParametersNumResults(numResults int) SearchParameters {
+	return SearchParameters{numResults, math.MaxFloat64}
+}
+
 // Search searches the VP-tree for the k nearest neighbours of target. It
 // returns the up to k narest neighbours and the corresponding distances in
 // order of least distance to largest distance.
-func (vp *VPTree) Search(target interface{}, k int) (results []interface{}, distances []float64) {
+func (vp *VPTree) Search(target interface{}, searchParameters SearchParameters) (results []interface{}, distances []float64) {
+	k := searchParameters.NumResults
 	if k < 1 {
 		return
 	}
 
 	h := make(priorityQueue, 0, k)
 
-	tau := math.MaxFloat64
+	tau := searchParameters.MaxDistance
 	vp.search(vp.root, &tau, target, k, &h)
 
 	for h.Len() > 0 {
