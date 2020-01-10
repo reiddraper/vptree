@@ -4,6 +4,7 @@ import (
 	"container/heap"
 	"math"
 	"math/rand"
+	"sort"
 )
 
 type node struct {
@@ -99,29 +100,44 @@ func (vp *VPTree) buildFromPoints(items []interface{}) (n *node) {
 	// Take a random item out of the items slice and make it this node's item
 	idx := rand.Intn(len(items))
 	n.Item = items[idx]
+
+	// Remove the Vantage Point from the remaining items
 	items[idx], items = items[len(items)-1], items[:len(items)-1]
 
 	if len(items) > 0 {
+		sortFunction := func(i, j int) bool {
+			iItem := items[i]
+			jItem := items[j]
+			iDistance := vp.distanceMetric(iItem, n.Item)
+			jDistance := vp.distanceMetric(jItem, n.Item)
+			return iDistance < jDistance
+		}
+
+		// Sort the remaining items by their distance to the Vantage point
+		sort.Slice(items, sortFunction)
+
+
 		// Now partition the items into two equal-sized sets, one
 		// closer to the node's item than the median, and one farther
 		// away.
-		median := len(items) / 2
-		pivotDist := vp.distanceMetric(items[median], n.Item)
-		items[median], items[len(items)-1] = items[len(items)-1], items[median]
+		medianIndex := len(items) / 2
+		pivotDist := vp.distanceMetric(items[medianIndex], n.Item)
 
-		storeIndex := 0
-		for i := 0; i < len(items)-1; i++ {
-			if vp.distanceMetric(items[i], n.Item) <= pivotDist {
-				items[storeIndex], items[i] = items[i], items[storeIndex]
-				storeIndex++
+		var lessThanItems []interface{}
+		var greaterThanOrEqualItems []interface{}
+
+		for i := 0; i < len(items); i++ {
+			distance := vp.distanceMetric(items[i], n.Item)
+			if distance < pivotDist {
+				lessThanItems = append(lessThanItems, items[i])
+			} else {
+				greaterThanOrEqualItems = append(greaterThanOrEqualItems, items[i])
 			}
 		}
-		items[len(items)-1], items[storeIndex] = items[storeIndex], items[len(items)-1]
-		median = storeIndex
 
 		n.Threshold = pivotDist
-		n.Left = vp.buildFromPoints(items[:median])
-		n.Right = vp.buildFromPoints(items[median:])
+		n.Left = vp.buildFromPoints(lessThanItems)
+		n.Right = vp.buildFromPoints(greaterThanOrEqualItems)
 	}
 	return
 }
